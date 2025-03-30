@@ -1,0 +1,24 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    setup_ci if is_ci
+    increment_build_number(xcodeproj: "MyApp.xcodeproj")
+    build_ios_app(
+      scheme: "MyApp",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      output_directory: "build",
+      output_name: "MyApp.ipa",
+      include_bitcode: false,
+      include_symbols: true
+    )
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APPLE_APP_ID"],
+      ipa: "build/MyApp.ipa"
+    )
+  end
+end 
