@@ -4,6 +4,7 @@ import HomeScreen from '../screens/HomeScreen';
 import CategoryScreen from '../screens/CategoryScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import AllCategoriesScreen from '../screens/AllCategoriesScreen';
+import CartScreen from '../screens/CartScreen';
 import { Product } from '../hooks/useProducts';
 
 export type HomeStackParamList = {
@@ -11,6 +12,7 @@ export type HomeStackParamList = {
   Category: { category: { _id: string; name: string; image: string } };
   ProductDetail: { product: Product };
   AllCategories: undefined;
+  Cart: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -32,6 +34,7 @@ const HomeStack = () => {
           tabBarStyle: { display: 'none' }
         }}
       />
+      <Stack.Screen name="Cart" component={CartScreen} />
     </Stack.Navigator>
   );
 };

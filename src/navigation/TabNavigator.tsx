@@ -15,20 +15,22 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabNavigator = () => {
-
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         tabBarShowLabel: false,
         headerShown: false,
         tabBarStyle: [
           styles.tabBar,
+          {
+            display: getTabBarVisibility(route),
+          },
         ],
         tabBarActiveTintColor: '#8E6CEF',
         tabBarInactiveTintColor: '#666666',
         tabBarItemStyle: styles.tabBarItem,
         tabBarIconStyle: styles.tabBarIcon,
-      }}
+      })}
     >
       <Tab.Screen
         name="HomeStack"
@@ -40,13 +42,6 @@ const TabNavigator = () => {
               style={[styles.icon, { tintColor: color }]}
             />
           ),
-          tabBarStyle: ((route) => {
-            const routeName = getFocusedRouteNameFromRoute(route) ?? '';
-            if (routeName === 'ProductDetail' || routeName === 'Category') {
-              return { display: 'none' };
-            }
-            return styles.tabBar;
-          })(route),
         })}
       />
       <Tab.Screen
@@ -75,6 +70,12 @@ const TabNavigator = () => {
       />
     </Tab.Navigator>
   );
+};
+
+const getTabBarVisibility = (route: any) => {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+  const hideOnScreens = ['ProductDetail', 'Category', 'Cart'];
+  return hideOnScreens.includes(routeName) ? 'none' : 'flex';
 };
 
 const styles = StyleSheet.create({

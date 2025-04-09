@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
@@ -16,7 +17,8 @@ import BackHeader from '../components/Headers/BackHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FastImage from 'react-native-fast-image';
 import { useProductDetail } from '../hooks/useProductDetail';
-import { EmptyState } from '../components/EmptyState';
+import useAddToCart from '../hooks/useAddToCart';
+import useCart from '../hooks/useCart';
 
 type ProductDetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
 type NavigationProp = NativeStackNavigationProp<HomeStackParamList>;
@@ -29,11 +31,42 @@ const ProductDetailScreen = () => {
   const { product: initialProduct } = route.params;
   
   const { product, isLoading, error } = useProductDetail(initialProduct._id);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const { cartItems, fetchCartItems } = useCart();
 
-  console.log(initialProduct);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const cartIconAnim = useRef(new Animated.Value(1)).current;
   
   const displayProduct = product || initialProduct;
+
+  useEffect(() => {
+    fetchCartItems();
+  }, []);
+
+  const { isAdding, scaleAnim, handleAddToCart } = useAddToCart({
+    productId: displayProduct._id,
+    quantity: 1,
+    onSuccess: () => {
+      // Animate cart icon
+      Animated.sequence([
+        Animated.timing(cartIconAnim, {
+          toValue: 1.5,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cartIconAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(async () => {
+        await fetchCartItems(); // Update cart items
+      });
+    },
+  });
+
+  const handleCartPress = () => {
+    navigation.navigate('Cart');
+  };
 
   const renderImageGallery = () => {
     if (!displayProduct.images || displayProduct.images.length === 0) {
@@ -84,7 +117,15 @@ const ProductDetailScreen = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <BackHeader title="Product Details" />
+        <BackHeader 
+          title="Product Details" 
+          rightIcon={{
+            name: 'cart-outline',
+            onPress: handleCartPress,
+            badgeCount: cartItems.length,
+            animation: cartIconAnim,
+          }}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8E6CEF" />
         </View>
@@ -95,7 +136,15 @@ const ProductDetailScreen = () => {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <BackHeader title="Product Details" />
+        <BackHeader 
+          title="Product Details" 
+          rightIcon={{
+            name: 'cart-outline',
+            onPress: handleCartPress,
+            badgeCount: cartItems.length,
+            animation: cartIconAnim,
+          }}
+        />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load product details</Text>
         </View>
@@ -105,7 +154,15 @@ const ProductDetailScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BackHeader title="Product Details" />
+      <BackHeader 
+        title="Product Details" 
+        rightIcon={{
+          name: 'cart-outline',
+          onPress: handleCartPress,
+          badgeCount: cartItems.length,
+          animation: cartIconAnim,
+        }}
+      />
       <ScrollView style={styles.scrollView}>
         {renderImageGallery()}
         
@@ -135,16 +192,21 @@ const ProductDetailScreen = () => {
           <Text style={styles.descriptionTitle}>Description</Text>
           <Text style={styles.description}>{displayProduct.description}</Text>
           
-          <TouchableOpacity 
-            style={[
-              styles.addToCartButton,
-              displayProduct.stock <= 0 && styles.disabledButton
-            ]}
-            disabled={displayProduct.stock <= 0}
-          >
-            <Icon name="cart-plus" size={24} color="#FFFFFF" />
-            <Text style={styles.addToCartText}>Add to Cart</Text>
-          </TouchableOpacity>
+          <Animated.View style={[styles.addToCartContainer, { transform: [{ scale: scaleAnim }] }]}>
+            <TouchableOpacity 
+              style={[
+                styles.addToCartButton,
+                (displayProduct.stock <= 0 || isAdding) && styles.disabledButton
+              ]}
+              onPress={handleAddToCart}
+              disabled={displayProduct.stock <= 0 || isAdding}
+            >
+              <Icon name="cart-plus" size={24} color="#FFFFFF" />
+              <Text style={styles.addToCartText}>
+                {isAdding ? 'Adding...' : 'Add to Cart'}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -257,6 +319,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 30,
   },
+  addToCartContainer: {
+    marginBottom: 20,
+  },
   addToCartButton: {
     flexDirection: 'row',
     backgroundColor: '#8E6CEF',
@@ -264,7 +329,14 @@ const styles = StyleSheet.create({
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   disabledButton: {
     backgroundColor: '#CCCCCC',

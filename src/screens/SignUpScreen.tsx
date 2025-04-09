@@ -41,7 +41,6 @@ const SignUpScreen = () => {
         email,
         password,
       });
-      console.log(response.data);
       if (response.data.token) {
         Alert.alert('Success', 'Account created successfully', [
           {

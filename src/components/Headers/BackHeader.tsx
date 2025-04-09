@@ -1,46 +1,103 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 
-const BackHeader = ({ title }: { title: string }) => {
+interface BackHeaderProps {
+  title: string;
+  rightIcon?: {
+    name: string;
+    onPress: () => void;
+    badgeCount?: number;
+    animation?: Animated.Value;
+  };
+}
+
+const BackHeader = ({ title, rightIcon }: BackHeaderProps) => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left-thin" size={24} color="#1A1A1A" />
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-left" size={24} color="#333" />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
+      {rightIcon ? (
+        <TouchableOpacity
+          style={styles.rightButton}
+          onPress={rightIcon.onPress}
+        >
+          <Animated.View style={[
+            styles.iconContainer,
+            rightIcon.animation && {
+              transform: [{ scale: rightIcon.animation }]
+            }
+          ]}>
+            <Icon name={rightIcon.name} size={24} color="#333" />
+            {rightIcon.badgeCount ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {rightIcon.badgeCount > 99 ? '99+' : rightIcon.badgeCount}
+                </Text>
+              </View>
+            ) : null}
+          </Animated.View>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.rightButton} />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 16,
-    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
-    borderRadius: 20,
-    backgroundColor: '#E0E0E0',
     width: 40,
     height: 40,
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  backText: {
-    fontSize: 20,
-    color: '#1A1A1A',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '600',
-    marginLeft: 16,
-    color: '#1A1A1A',
+    color: '#333',
+  },
+  rightButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#8E6CEF',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

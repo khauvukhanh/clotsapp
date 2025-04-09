@@ -1,15 +1,22 @@
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
-import { Text, FlatList, Image, TouchableOpacity, StyleSheet, View, ActivityIndicator } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import FastImage from "react-native-fast-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BackHeader from '../components/Headers/BackHeader';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
-import { HomeStackParamList } from '../navigation/HomeStack';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useProducts, Product } from '../hooks/useProducts';
-import FastImage from 'react-native-fast-image';
-import { EmptyState } from '../components/EmptyState';
+import { EmptyState } from "../components/EmptyState";
+import BackHeader from "../components/Headers/BackHeader";
+import { Product, useProducts } from "../hooks/useProducts";
+import { HomeStackParamList } from "../navigation/HomeStack";
 
-type CategoryRouteProp = RouteProp<HomeStackParamList, 'Category'>;
+type CategoryRouteProp = RouteProp<HomeStackParamList, "Category">;
 type NavigationProp = NativeStackNavigationProp<HomeStackParamList>;
 
 const CategoryScreen = () => {
@@ -19,21 +26,25 @@ const CategoryScreen = () => {
   const { products, isLoading, error } = useProducts(category._id);
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.productItem}
-      onPress={() => navigation.navigate('ProductDetail', { product: item })}
+      onPress={() => navigation.navigate("ProductDetail", { product: item })}
     >
-      <FastImage 
+      <FastImage
         source={{ uri: item.thumbnail }}
         style={styles.productImage}
         resizeMode={FastImage.resizeMode.cover}
       />
       <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
         <View style={styles.priceContainer}>
           <Text style={styles.price}>${item.price.toFixed(2)}</Text>
           {item.discountPrice > 0 && (
-            <Text style={styles.oldPrice}>${item.discountPrice.toFixed(2)}</Text>
+            <Text style={styles.oldPrice}>
+              ${item.discountPrice.toFixed(2)}
+            </Text>
           )}
         </View>
       </View>
@@ -59,7 +70,7 @@ const CategoryScreen = () => {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <EmptyState 
+            <EmptyState
               icon="package-variant-closed"
               title="No Products Found"
               message="There are no products available in this category yet."
@@ -74,32 +85,32 @@ const CategoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#FFFFFF",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
     fontSize: 16,
-    color: '#F44336',
+    color: "#F44336",
   },
   listContent: {
     padding: 16,
     flexGrow: 1,
   },
   productItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     marginBottom: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -113,7 +124,7 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
     padding: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   productName: {
     fontSize: 16,
@@ -122,8 +133,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   price: {
     fontSize: 16,
@@ -134,7 +145,7 @@ const styles = StyleSheet.create({
   oldPrice: {
     fontSize: 14,
     color: "#666666",
-    textDecorationLine: 'line-through',
+    textDecorationLine: "line-through",
   },
 });
 
