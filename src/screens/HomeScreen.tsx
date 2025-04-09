@@ -1,66 +1,84 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
-  View
+  View,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import CategorySection from '../components/CategorySections';
 import MainHeader from '../components/Headers/MainHeader';
 import SearchBar from '../components/SearchBar';
 import TopSellingSection from '../components/TopSellingSection';
-const HomeScreen = () => {
-  const categories = [
-    { id: 1, name: 'Hoodies', image: require('../assets/icons/hoodie.png') },
-    { id: 2, name: 'Shorts', image: require('../assets/icons/short.png') },
-    { id: 3, name: 'Shoes', image: require('../assets/icons/shoes.png') },
-    { id: 4, name: 'Bag', image: require('../assets/icons/bag.png')},
-    { id: 5, name: 'Accessories', image: require('../assets/icons/accessories.png')},
-  ];
+import ApiClient from '../services/client';
+import { useUser } from '../hooks/useUser';
+import { useTopSellingProducts } from '../hooks/useTopSellingProducts';
+import { useNewProducts } from '../hooks/useNewProducts';
+import { formatProducts } from '../utils/productFormatter';
 
-  const products = [
-    { 
-      id: 1, 
-      name: "Men's Harrington Jacket", 
-      price: "$148.00", 
-      oldPrice: null, 
-      image: require('../assets/icons/product.png') 
-    },
-    { 
-      id: 2, 
-      name: "Max Cirro Men's Slides", 
-      price: "$55.00", 
-      oldPrice: "$100.97", 
-      image: require('../assets/icons/product.png') 
-    },
-    { 
-      id: 3, 
-      name: "Max Cirro Men's Slides", 
-      price: "$55.00", 
-      oldPrice: "$100.97", 
-      image: require('../assets/icons/product.png') 
-    },
-    { 
-      id: 4, 
-      name: "Max Cirro Men's Slides", 
-      price: "$55.00", 
-      oldPrice: "$100.97", 
-      image: require('../assets/icons/product.png') 
-    },
-  ];
+interface Category {
+  id: number;
+  name: string;
+  image: string;
+}
+
+const HomeScreen = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading: isLoadingUser } = useUser();
+  const { products: topSellingProducts, isLoading: isLoadingTopSelling } = useTopSellingProducts(10);
+  const { products: newProducts, isLoading: isLoadingNew } = useNewProducts(10);
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setIsLoading(true);
+      const response = await ApiClient.get('categories');
+      setCategories(response.data);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to fetch categories');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Format products using the utility function
+  const formattedTopSellingProducts = formatProducts(topSellingProducts);
+  const formattedNewProducts = formatProducts(newProducts);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <MainHeader label="Men" />
+    <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <MainHeader label={isLoadingUser ? "Loading..." : user?.name || "Guest"} />
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.searchBar}>
           <SearchBar />
         </View>
         {/* Categories Section */}
-        <CategorySection categories={categories} />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#8E6CEF" />
+          </View>
+        ) : (
+          <CategorySection categories={categories} />
+        )}
 
-        <TopSellingSection title="Top Selling" products={products} />
-        <TopSellingSection title="New In" products={products} />
+        {/* Products Section */}
+        {isLoadingTopSelling || isLoadingNew ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#8E6CEF" />
+          </View>
+        ) : (
+          <>
+            <TopSellingSection title="Top Selling" products={formattedTopSellingProducts} />
+            <TopSellingSection title="New In" products={formattedNewProducts} />
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -78,6 +96,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 9,
     marginTop: 24,
   },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default HomeScreen;
+

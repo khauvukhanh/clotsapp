@@ -3,25 +3,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import CategoryScreen from '../screens/CategoryScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
+import AllCategoriesScreen from '../screens/AllCategoriesScreen';
+import { Product } from '../hooks/useProducts';
 
 export type HomeStackParamList = {
   Home: undefined;
-  Category: {
-    category: {
-      id: number;
-      name: string;
-      image: any;
-    };
-  };
-  ProductDetail: {
-    product: {
-      id: number;
-      name: string;
-      price: string;
-      oldPrice: string | null;
-      image: any;
-    };
-  };
+  Category: { category: { _id: string; name: string; image: string } };
+  ProductDetail: { product: Product };
+  AllCategories: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -35,6 +24,7 @@ const HomeStack = () => {
     >
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Category" component={CategoryScreen} />
+      <Stack.Screen name="AllCategories" component={AllCategoriesScreen} />
       <Stack.Screen 
         name="ProductDetail" 
         component={ProductDetailScreen}
@@ -46,4 +36,4 @@ const HomeStack = () => {
   );
 };
 
-export default HomeStack; 
+export default HomeStack;

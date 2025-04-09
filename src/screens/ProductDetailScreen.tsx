@@ -1,57 +1,152 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {HomeStackParamList} from '../navigation/HomeStack';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { HomeStackParamList } from '../navigation/HomeStack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import BackHeader from '../components/Headers/BackHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import FastImage from 'react-native-fast-image';
+import { useProductDetail } from '../hooks/useProductDetail';
+import { EmptyState } from '../components/EmptyState';
 
 type ProductDetailRouteProp = RouteProp<HomeStackParamList, 'ProductDetail'>;
+type NavigationProp = NativeStackNavigationProp<HomeStackParamList>;
+
+const { width } = Dimensions.get('window');
 
 const ProductDetailScreen = () => {
   const route = useRoute<ProductDetailRouteProp>();
-  const {product} = route.params;
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
+  const { product: initialProduct } = route.params;
+  
+  const { product, isLoading, error } = useProductDetail(initialProduct._id);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  console.log(initialProduct);
+  
+  const displayProduct = product || initialProduct;
+
+  const renderImageGallery = () => {
+    if (!displayProduct.images || displayProduct.images.length === 0) {
+      return (
+        <FastImage
+          source={{ uri: displayProduct.thumbnail }}
+          style={styles.mainImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      );
+    }
+
+    return (
+      <View>
+        <FastImage
+          source={{ uri: displayProduct.images[selectedImageIndex] || displayProduct.thumbnail }}
+          style={styles.mainImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {displayProduct.images.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.thumbnailContainer}
+          >
+            {displayProduct.images.map((image, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedImageIndex(index)}
+                style={[
+                  styles.thumbnail,
+                  selectedImageIndex === index && styles.selectedThumbnail,
+                ]}
+              >
+                <FastImage
+                  source={{ uri: image }}
+                  style={styles.thumbnailImage}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <BackHeader title="Product Details" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#8E6CEF" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <BackHeader title="Product Details" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load product details</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left-thin" size={24} color="#1A1A1A" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cartButton}>
-          <Icon name="cart-outline" size={24} color="#1A1A1A" />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>2</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <ScrollView>
-        <Image source={product.image} style={styles.image} />
-        <View style={styles.content}>
-          <Text style={styles.name}>{product.name}</Text>
+      <BackHeader title="Product Details" />
+      <ScrollView style={styles.scrollView}>
+        {renderImageGallery()}
+        
+        <View style={styles.contentContainer}>
+          <Text style={styles.name}>{displayProduct.name}</Text>
+          
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>{product.price}</Text>
-            {product.oldPrice && (
-              <Text style={styles.oldPrice}>{product.oldPrice}</Text>
+            <Text style={styles.price}>${displayProduct.price.toFixed(2)}</Text>
+            {displayProduct.discountPrice > 0 && (
+              <Text style={styles.discountPrice}>
+                ${displayProduct.discountPrice.toFixed(2)}
+              </Text>
             )}
           </View>
-          <Text style={styles.description}>
-            Experience the perfect blend of comfort and style with our premium product. Made from high-quality materials, this item offers exceptional durability and a modern aesthetic that complements any space.
-          </Text>
+          
+          <View style={styles.stockContainer}>
+            <Text style={styles.stockLabel}>Stock:</Text>
+            <Text style={[
+              styles.stockValue,
+              displayProduct.stock > 10 ? styles.inStock : 
+              displayProduct.stock > 0 ? styles.lowStock : styles.outOfStock
+            ]}>
+              {displayProduct.stock > 0 ? `${displayProduct.stock} available` : 'Out of stock'}
+            </Text>
+          </View>
+          
+          <Text style={styles.descriptionTitle}>Description</Text>
+          <Text style={styles.description}>{displayProduct.description}</Text>
+          
+          <TouchableOpacity 
+            style={[
+              styles.addToCartButton,
+              displayProduct.stock <= 0 && styles.disabledButton
+            ]}
+            disabled={displayProduct.stock <= 0}
+          >
+            <Icon name="cart-plus" size={24} color="#FFFFFF" />
+            <Text style={styles.addToCartText}>Add to Cart</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.addToCartButton}>
-          <Icon name="cart-plus" size={24} color="#FFFFFF" style={styles.cartIcon} />
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -61,101 +156,124 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#F44336',
+  },
+  mainImage: {
+    width: width,
+    height: width,
+  },
+  thumbnailContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 24,
-    paddingTop: 16,
+    padding: 10,
   },
-  backButton: {
-    borderRadius: 20,
-    backgroundColor: '#E0E0E0',
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+  thumbnail: {
+    width: 60,
+    height: 60,
+    marginRight: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  cartButton: {
-    position: 'relative',
-    padding: 8,
+  selectedThumbnail: {
+    borderColor: '#8E6CEF',
   },
-  cartBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#8E6CEF',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cartBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  image: {
+  thumbnailImage: {
     width: '100%',
-    height: 400,
+    height: '100%',
+    borderRadius: 6,
   },
-  content: {
-    padding: 16,
+  contentContainer: {
+    padding: 20,
   },
   name: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 15,
   },
   price: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#8E6CEF',
-    marginRight: 8,
+    marginRight: 10,
   },
-  oldPrice: {
-    fontSize: 16,
-    color: '#666666',
+  discountPrice: {
+    fontSize: 18,
+    color: '#999',
     textDecorationLine: 'line-through',
+  },
+  stockContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  stockLabel: {
+    fontSize: 16,
+    color: '#666',
+    marginRight: 5,
+  },
+  stockValue: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  inStock: {
+    color: '#4CAF50',
+  },
+  lowStock: {
+    color: '#FF9800',
+  },
+  outOfStock: {
+    color: '#F44336',
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
   },
   description: {
     fontSize: 16,
-    color: '#666666',
+    color: '#666',
     lineHeight: 24,
-    marginTop: 16,
-  },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    paddingBottom: 44,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
+    marginBottom: 30,
   },
   addToCartButton: {
-    backgroundColor: '#8E6CEF',
-    height: 56,
-    borderRadius: 100,
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#8E6CEF',
+    borderRadius: 12,
+    padding: 15,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  cartIcon: {
-    marginRight: 8,
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
   },
   addToCartText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
+    marginLeft: 10,
   },
 });
 

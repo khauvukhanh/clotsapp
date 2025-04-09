@@ -34,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (token: string, callback: () => void) => {
     AsyncStorage.setItem('isAuthenticated', 'true');
+    AsyncStorage.setItem('token', token);
     setIsAuthenticated(true);
     await fetchProfile();
     callback?.();

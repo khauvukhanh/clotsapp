@@ -11,6 +11,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../context/AuthContext';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useUser } from '../hooks/useUser';
 
 const menuOptions = [
   {id: '1', title: 'Address'},
@@ -22,6 +23,7 @@ const menuOptions = [
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const {logout} = useAuth();
+  const { user, isLoading: isLoadingUser } = useUser();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -34,9 +36,9 @@ const ProfileScreen = () => {
         <View style={styles.profileInfo}>
           <View style={styles.profileHeader}>
             <View>
-              <Text style={styles.profileName}>Gilbert Jones</Text>
-              <Text style={styles.profileEmail}>Gilbertjones001@gmail.com</Text>
-              <Text style={styles.profilePhone}>121-224-7890</Text>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileEmail}>{user?.email}</Text>
+              <Text style={styles.profilePhone}>{Date(user?.createdAt).toString()}</Text>
             </View>
             <TouchableOpacity>
               <Text style={styles.editText}>Edit</Text>

@@ -19,6 +19,8 @@ class ApiClient {
     this.api.interceptors.request.use(
       async (config) => {
         const token = await AsyncStorage.getItem('token');
+        console.log('token', token);
+
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -33,7 +35,6 @@ class ApiClient {
       async (error) => {
         if (error.response) {
           const { status } = error.response;
-          console.info(">>>asdads", error.response);
           if (status === 401 && error.config.url !== 'auth/login') {
             // Alert.alert('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại!', [
             //   { text: 'OK', onPress: () => this.navigateToLogin() },
