@@ -74,7 +74,7 @@ const TabNavigator = () => {
 
 const getTabBarVisibility = (route: any) => {
   const routeName = getFocusedRouteNameFromRoute(route) ?? '';
-  const hideOnScreens = ['ProductDetail', 'Category', 'Cart'];
+  const hideOnScreens = ['ProductDetail', 'Category', 'Cart', 'Checkout'];
   return hideOnScreens.includes(routeName) ? 'none' : 'flex';
 };
 

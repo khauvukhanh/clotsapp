@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import ApiClient from '../services/client';
 import { Product } from './useProducts';
@@ -21,6 +21,7 @@ interface UseCartReturn {
   isLoading: boolean;
   error: string | null;
   fetchCartItems: () => Promise<void>;
+  removeAllItems: () => Promise<void>;
 }
 
 const useCart = (): UseCartReturn => {
@@ -29,11 +30,11 @@ const useCart = (): UseCartReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await ApiClient.get<CartResponse>('cart');
+      const response = await ApiClient.get('cart');
       setCartItems(response.data.items);
       setTotalAmount(response.data.totalAmount);
     } catch (error: any) {
@@ -42,11 +43,27 @@ const useCart = (): UseCartReturn => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCartItems();
   }, []);
+
+  const removeAllItems = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await ApiClient.delete('cart');
+      setCartItems([]);
+      setTotalAmount(0);
+    } catch (err) {
+      setError(err as string);
+      console.error('Error removing cart items:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useCallback(() => {
+    fetchCartItems();
+  }, [fetchCartItems]);
 
   return {
     cartItems,
@@ -54,6 +71,7 @@ const useCart = (): UseCartReturn => {
     isLoading,
     error,
     fetchCartItems,
+    removeAllItems,
   };
 };
 
