@@ -19,7 +19,6 @@ class ApiClient {
     this.api.interceptors.request.use(
       async (config) => {
         const token = await AsyncStorage.getItem('token');
-        console.log('token', token);
 
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -35,13 +34,14 @@ class ApiClient {
       async (error) => {
         if (error.response) {
           const { status } = error.response;
+          console.log('status', status, error.config.url);
           if (status === 401 && error.config.url !== 'auth/login') {
-            // Alert.alert('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại!', [
-            //   { text: 'OK', onPress: () => this.navigateToLogin() },
-            // ]);
-            // return;
+            Alert.alert('Thông báo', 'Vui lòng đăng nhập lại!', [
+              { text: 'OK', onPress: () => this.navigateToLogin() },
+            ]);
+            return;
           } else {
-            // Alert.alert('Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại!');
+            Alert.alert('Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại!');
           }
         }
         return Promise.reject(new Error(error.response?.data?.message));
@@ -51,9 +51,7 @@ class ApiClient {
 
   navigateToLogin() {
     AsyncStorage.removeItem('token');
-    // Điều hướng về màn hình đăng nhập
-    // Ví dụ với React Navigation: navigation.replace('Login');
-    console.log('Redirecting to login...');
+
   }
 
   get(url, params = {}) {

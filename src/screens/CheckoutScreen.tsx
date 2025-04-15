@@ -15,12 +15,13 @@ import BackHeader from '../components/Headers/BackHeader';
 import useCart from '../hooks/useCart';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { createOrder, CreateOrderRequest, ShippingAddress } from '../services/orderService';
-
+import { CommonActions, useNavigation } from '@react-navigation/native';
 type PaymentMethod = 'credit_card' | 'paypal' | 'cash_on_delivery';
 
 const CheckoutScreen = () => {
   const { cartItems, totalAmount, isLoading: isCartLoading, fetchCartItems } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigation = useNavigation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -108,7 +109,12 @@ const CheckoutScreen = () => {
           {
             text: 'OK',
             onPress: () => {
-              // TODO: Navigate to order confirmation screen or home screen
+                navigation.dispatch({
+                    ...CommonActions.reset({
+                      index: 0,
+                      routes: [{ name: 'Order' }]
+                    }),
+                  });
             },
           },
         ]

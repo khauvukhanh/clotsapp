@@ -5,11 +5,12 @@ import HomeStack from './HomeStack';
 import NotificationScreen from '../screens/NotificationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-
+import OrderStack from './OrderStack';
 export type TabParamList = {
   HomeStack: undefined;
   Notification: undefined;
   Profile: undefined;
+  Order: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -57,6 +58,18 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
+        name="Order"
+        component={OrderStack}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={require('../assets/icons/order.png')}
+              style={[styles.icon, { tintColor: color }]}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
@@ -74,7 +87,7 @@ const TabNavigator = () => {
 
 const getTabBarVisibility = (route: any) => {
   const routeName = getFocusedRouteNameFromRoute(route) ?? '';
-  const hideOnScreens = ['ProductDetail', 'Category', 'Cart', 'Checkout'];
+  const hideOnScreens = ['ProductDetail', 'Category', 'Cart', 'Checkout', 'OrderDetail'];
   return hideOnScreens.includes(routeName) ? 'none' : 'flex';
 };
 

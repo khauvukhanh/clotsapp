@@ -1,4 +1,5 @@
 import client from './client';
+import { OrderItem } from '../types/order';
 
 export interface ShippingAddress {
   street: string;
@@ -7,6 +8,37 @@ export interface ShippingAddress {
   zipCode: string;
   country: string;
 }
+
+export interface Order {
+  _id: string;
+  user: string;
+  items: OrderItem[];
+  totalAmount: number;
+  shippingAddress: ShippingAddress;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getOrders = async (): Promise<Order[]> => {
+  try {
+    const response = await client.get('/orders');
+    return response.data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch orders');
+  }
+};
+
+export const getOrderById = async (orderId: string): Promise<Order> => {
+  try {
+    const response = await client.get(`/order/${orderId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch order details');
+  }
+};
 
 export interface CreateOrderRequest {
   shippingAddress: ShippingAddress;

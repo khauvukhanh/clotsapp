@@ -14,6 +14,7 @@ export type HomeStackParamList = {
   ProductDetail: { product: Product };
   AllCategories: undefined;
   Cart: undefined;
+  Checkout: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -28,13 +29,7 @@ const HomeStack = () => {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Category" component={CategoryScreen} />
       <Stack.Screen name="AllCategories" component={AllCategoriesScreen} />
-      <Stack.Screen 
-        name="ProductDetail" 
-        component={ProductDetailScreen}
-        options={{
-          tabBarStyle: { display: 'none' }
-        }}
-      />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Cart" component={CartScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
     </Stack.Navigator>

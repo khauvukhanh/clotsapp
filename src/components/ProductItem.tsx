@@ -13,7 +13,7 @@ const ProductItem = ({ name, price, oldPrice, image }: any) => {
       </View>
 
       {/* Tên sản phẩm */}
-      <Text style={styles.name}>{name}</Text>
+      <Text style={styles.name} numberOfLines={2}>{name}</Text>
 
       {/* Giá sản phẩm */}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
