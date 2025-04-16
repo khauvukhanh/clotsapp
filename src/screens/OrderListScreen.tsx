@@ -15,7 +15,6 @@ import { OrderStackParamList } from '../navigation/OrderStack';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getOrders, Order } from '../services/orderService';
 import FastImage from 'react-native-fast-image';
-import { COLORS, FONTS, SIZES } from '../theme';
 
 type OrderListScreenNavigationProp = NativeStackNavigationProp<OrderStackParamList, 'OrderList'>;
 

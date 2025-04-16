@@ -1,6 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import client from './client';
+import { useToast } from '../context/ToastContext';
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
@@ -71,4 +72,52 @@ export const checkNotificationPermission = async (): Promise<boolean> => {
     console.error('Error checking notification permission:', error);
     return false;
   }
+};
+
+// Setup foreground message handler
+export const setupForegroundHandler = (onMessageReceived: (message: any) => void, showToast?: (message: string, title?: string, type?: 'success' | 'error' | 'info') => void) => {
+  return messaging().onMessage(async (remoteMessage) => {
+    console.log('Foreground message received:', remoteMessage);
+    
+    // Handle the notification data
+    if (remoteMessage.notification) {
+      const { title, body } = remoteMessage.notification;
+      console.log('Notification title:', title);
+      console.log('Notification body:', body);
+      
+      showToast?.(body || '', title || 'New Notification', 'info');
+
+    }
+
+    // Handle the data payload
+    if (remoteMessage.data) {
+      console.log('Notification data:', remoteMessage.data);
+    }
+
+    // Call the callback with the message
+    onMessageReceived(remoteMessage);
+  });
+};
+
+// Setup notification opened handler
+export const setupNotificationOpenedHandler = (onNotificationOpened: (data: any) => void) => {
+  // Handle notification opened from background
+  messaging().onNotificationOpenedApp((remoteMessage) => {
+    console.log('Notification opened from background:', remoteMessage);
+    if (remoteMessage.data) {
+      onNotificationOpened(remoteMessage.data);
+    }
+  });
+
+  // Check if app was opened from a notification
+  messaging()
+    .getInitialNotification()
+    .then((remoteMessage) => {
+      if (remoteMessage) {
+        console.log('Notification opened from quit state:', remoteMessage);
+        if (remoteMessage.data) {
+          onNotificationOpened(remoteMessage.data);
+        }
+      }
+    });
 }; 
