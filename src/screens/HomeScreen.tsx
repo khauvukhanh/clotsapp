@@ -5,6 +5,7 @@ import {
   View,
   ActivityIndicator,
   Alert,
+  Text,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import CategorySection from '../components/CategorySections';
@@ -16,6 +17,7 @@ import { useUser } from '../hooks/useUser';
 import { useTopSellingProducts } from '../hooks/useTopSellingProducts';
 import { useNewProducts } from '../hooks/useNewProducts';
 import { formatProducts } from '../utils/productFormatter';
+import { useNotificationSetup } from '../hooks/useNotificationSetup';
 
 interface Category {
   id: number;
@@ -30,6 +32,9 @@ const HomeScreen = () => {
   const { products: topSellingProducts, isLoading: isLoadingTopSelling } = useTopSellingProducts(10);
   const { products: newProducts, isLoading: isLoadingNew } = useNewProducts(10);
   const insets = useSafeAreaInsets();
+
+  // Initialize notification setup
+  useNotificationSetup();
 
   useEffect(() => {
     fetchCategories();
@@ -100,6 +105,10 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });
 
