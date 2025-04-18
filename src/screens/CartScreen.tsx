@@ -1,6 +1,6 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,14 +10,15 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
 } from "react-native";
+import { Swipeable } from 'react-native-gesture-handler';
 import FastImage from "react-native-fast-image";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 import BackHeader from "../components/Headers/BackHeader";
 import useCart from "../hooks/useCart";
 import { RootStackParamList } from "../types/navigation";
-import { Product } from "../types/product";
 
 // Types
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -32,10 +33,7 @@ interface CartItem {
     discountPrice?: number;
     thumbnail: string;
     images: string[];
-    category: {
-      _id: string;
-      name: string;
-    };
+    category: string;
     stock: number;
     isActive: boolean;
     createdAt: string;
@@ -49,23 +47,78 @@ interface CartItem {
 const CartItem = ({
   item,
   onPress,
+  onDelete,
+  onUpdateQuantity,
+  isUpdating,
 }: {
   item: CartItem;
   onPress: () => void;
-}) => (
-  <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
-    <FastImage
-      source={{ uri: item.product.thumbnail }}
-      style={styles.productImage}
-      resizeMode={FastImage.resizeMode.cover}
-    />
-    <View style={styles.itemInfo}>
-      <Text style={styles.productName}>{item.product.name}</Text>
-      <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
-      <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-    </View>
-  </TouchableOpacity>
-);
+  onDelete: () => void;
+  onUpdateQuantity: (quantity: number) => void;
+  isUpdating: boolean;
+}) => {
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+    const scale = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <View style={styles.deleteContainer}>
+        <Animated.View style={[styles.deleteButton, { transform: [{ scale }] }]}>
+          <TouchableOpacity onPress={onDelete} style={styles.deleteButtonContent}>
+            <Icon name="trash-can-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    );
+  };
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      rightThreshold={40}
+      overshootRight={false}
+    >
+      <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
+        <FastImage
+          source={{ uri: item.product.thumbnail }}
+          style={styles.productImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        <View style={styles.itemInfo}>
+          <Text style={styles.productName}>{item.product.name}</Text>
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity 
+              style={[styles.quantityButton, isUpdating && styles.disabledButton]} 
+              onPress={() => onUpdateQuantity(Math.max(1, item.quantity - 1))}
+              disabled={isUpdating}
+            >
+              <Icon name="minus" size={20} color="#333" />
+            </TouchableOpacity>
+            {isUpdating ? (
+              <ActivityIndicator size="small" color="#8E6CEF" style={styles.quantityLoader} />
+            ) : (
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+            )}
+            <TouchableOpacity 
+              style={[styles.quantityButton, isUpdating && styles.disabledButton]} 
+              onPress={() => onUpdateQuantity(item.quantity + 1)}
+              disabled={isUpdating}
+            >
+              <Icon name="plus" size={20} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.price}>${(item.price * item.quantity).toFixed(2)}</Text>
+        </View>
+      </TouchableOpacity>
+    </Swipeable>
+  );
+};
 
 const LoadingState = () => (
   <View style={styles.loadingContainer}>
@@ -105,6 +158,9 @@ const CartScreen = () => {
     fetchCartItems,
     error,
     removeAllItems,
+    removeItem,
+    updateQuantity,
+    updatingItems,
   } = useCart();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -112,7 +168,7 @@ const CartScreen = () => {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const handleItemPress = (product: Product) => {
+  const handleItemPress = (product: CartItem['product']) => {
     navigation.navigate("ProductDetail", { product });
   };
 
@@ -145,6 +201,42 @@ const CartScreen = () => {
         },
       ]
     );
+  };
+
+  const handleDeleteItem = async (productId: string) => {
+    try {
+      setIsDeleting(true);
+      await removeItem(productId);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to remove item from cart');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleUpdateQuantity = async (productId: string, quantity: number) => {
+    try {
+      // Find the cart item to check stock
+      const cartItem = cartItems.find(item => item.product._id === productId);
+      if (!cartItem) {
+        Alert.alert('Error', 'Item not found in cart');
+        return;
+      }
+
+      // Check if requested quantity exceeds available stock
+      if (quantity > cartItem.product.stock) {
+        Alert.alert(
+          'Stock Limit',
+          `Only ${cartItem.product.stock} items available in stock`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      await updateQuantity(productId, quantity);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update quantity');
+    }
   };
 
   if (isLoading) {
@@ -190,6 +282,9 @@ const CartScreen = () => {
             <CartItem
               item={item}
               onPress={() => handleItemPress(item.product)}
+              onDelete={() => handleDeleteItem(item.product._id)}
+              onUpdateQuantity={(quantity) => handleUpdateQuantity(item.product._id, quantity)}
+              isUpdating={updatingItems.includes(item.product._id)}
             />
           )}
           keyExtractor={(item) => item._id}
@@ -267,10 +362,25 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 4,
   },
-  quantity: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 12,
+    minWidth: 24,
+    textAlign: 'center',
   },
   price: {
     fontSize: 16,
@@ -300,8 +410,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  quantityLoader: {
+    marginHorizontal: 12,
+    minWidth: 24,
+  },
   disabledButton: {
     opacity: 0.5,
+  },
+  deleteContainer: {
+    width: 80,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FF6B6B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  deleteButtonContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

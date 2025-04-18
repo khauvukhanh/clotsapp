@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -18,6 +18,8 @@ import { useTopSellingProducts } from '../hooks/useTopSellingProducts';
 import { useNewProducts } from '../hooks/useNewProducts';
 import { formatProducts } from '../utils/productFormatter';
 import { useNotificationSetup } from '../hooks/useNotificationSetup';
+import useCart from '../hooks/useCart';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Category {
   id: number;
@@ -32,13 +34,21 @@ const HomeScreen = () => {
   const { products: topSellingProducts, isLoading: isLoadingTopSelling } = useTopSellingProducts(10);
   const { products: newProducts, isLoading: isLoadingNew } = useNewProducts(10);
   const insets = useSafeAreaInsets();
+  const { cartItems, fetchCartItems } = useCart();
 
   // Initialize notification setup
   useNotificationSetup();
 
   useEffect(() => {
     fetchCategories();
+    fetchCartItems();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartItems();
+    }, [fetchCartItems])
+  );
 
   const fetchCategories = async () => {
     try {
@@ -56,9 +66,14 @@ const HomeScreen = () => {
   const formattedTopSellingProducts = formatProducts(topSellingProducts);
   const formattedNewProducts = formatProducts(newProducts);
 
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <MainHeader label={isLoadingUser ? "Loading..." : user?.name || "Guest"} />
+      <MainHeader 
+        label={isLoadingUser ? "Loading..." : user?.name || "Guest"} 
+        badgeCount={totalQuantity}
+      />
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.searchBar}>

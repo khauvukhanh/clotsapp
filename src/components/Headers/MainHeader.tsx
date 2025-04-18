@@ -1,9 +1,22 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { HomeStackParamList } from '../../navigation/HomeStack';
 
-const Header = ({ label }: any) => {
-  const navigation = useNavigation();
+interface MainHeaderProps {
+  label: string;
+  badgeCount?: number;
+}
+
+const MainHeader: React.FC<MainHeaderProps> = ({ label, badgeCount = 0 }) => {
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+
+  const handleCartPress = () => {
+    navigation.navigate('Cart');
+  };
+
   return (
     <View style={styles.container}>
       {/* Avatar user */}
@@ -20,8 +33,13 @@ const Header = ({ label }: any) => {
       </TouchableOpacity>
 
       {/* Nút giỏ hàng */}
-      <TouchableOpacity style={styles.cartButton} onPress={() => navigation.navigate('Cart')}>
-        <Image source={require('../../assets/icons/cart.png')} style={styles.cartIcon} />
+      <TouchableOpacity style={styles.cartButton} onPress={handleCartPress}>
+        <Icon name="cart-outline" size={24} color="#333" />
+        {badgeCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badgeCount}</Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -54,17 +72,34 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   cartButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#8E5BE0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 8,
+    position: 'relative',
   },
-  cartIcon: {
-    width: 20,
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#8E6CEF',
+    borderRadius: 10,
+    minWidth: 20,
     height: 20,
-  }
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
 
-export default Header;
+export default MainHeader;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { HomeStackParamList } from '../navigation/HomeStack';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import BackHeader from '../components/Headers/BackHeader';
@@ -37,10 +37,17 @@ const ProductDetailScreen = () => {
   const cartIconAnim = useRef(new Animated.Value(1)).current;
   
   const displayProduct = product || initialProduct;
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     fetchCartItems();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartItems();
+    }, [fetchCartItems])
+  );
 
   const { isAdding, scaleAnim, handleAddToCart } = useAddToCart({
     productId: displayProduct._id,
@@ -122,7 +129,7 @@ const ProductDetailScreen = () => {
           rightIcon={{
             name: 'cart-outline',
             onPress: handleCartPress,
-            badgeCount: cartItems.length,
+            badgeCount: totalQuantity,
             animation: cartIconAnim,
           }}
         />
@@ -141,7 +148,7 @@ const ProductDetailScreen = () => {
           rightIcon={{
             name: 'cart-outline',
             onPress: handleCartPress,
-            badgeCount: cartItems.length,
+            badgeCount: totalQuantity,
             animation: cartIconAnim,
           }}
         />
@@ -159,7 +166,7 @@ const ProductDetailScreen = () => {
         rightIcon={{
           name: 'cart-outline',
           onPress: handleCartPress,
-          badgeCount: cartItems.length,
+          badgeCount: totalQuantity,
           animation: cartIconAnim,
         }}
       />
