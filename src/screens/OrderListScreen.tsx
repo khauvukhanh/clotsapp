@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { OrderStackParamList } from '../navigation/OrderStack';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getOrders, Order } from '../services/orderService';
-import FastImage from 'react-native-fast-image';
+import { getOrders, Order, GetOrdersResponse } from '../services/orderService';
+import OrderItem from '../components/OrderItem';
 
 type OrderListScreenNavigationProp = NativeStackNavigationProp<OrderStackParamList, 'OrderList'>;
 
@@ -40,12 +41,20 @@ const OrderListScreen = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [statusCounts, setStatusCounts] = useState<GetOrdersResponse['statusCounts']>({
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  });
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (status?: string) => {
     try {
-      const response = await getOrders();
-      console.log(response);
-      setOrders(response);
+      const response = await getOrders(status);
+      setOrders(response.orders);
+      setStatusCounts(response.statusCounts);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
@@ -55,69 +64,58 @@ const OrderListScreen = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchOrders(selectedStatus || undefined);
+  }, [selectedStatus]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    fetchOrders();
-  }, []);
+    fetchOrders(selectedStatus || undefined);
+  }, [selectedStatus]);
 
-  const renderOrderItem = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderItem}
-      onPress={() => navigation.navigate('OrderDetail', { orderId: item._id })}
+  const renderStatusFilter = () => (
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      style={styles.statusFilterContainer}
     >
-      <View style={styles.orderHeader}>
-        <View style={styles.orderIdContainer}>
-          <Icon name="receipt" size={20} color="#8E6CEF" />
-          <Text style={styles.orderId}>Order #{item._id.slice(-6)}</Text>
-        </View>
-        <Text style={styles.orderDate}>
-          {new Date(item.createdAt).toLocaleDateString()}
+      <TouchableOpacity
+        style={[
+          styles.statusFilterItem,
+          !selectedStatus && styles.selectedStatusFilterItem,
+        ]}
+        onPress={() => setSelectedStatus(null)}
+      >
+        <Text style={[
+          styles.statusFilterText,
+          !selectedStatus && styles.selectedStatusFilterText,
+        ]}>
+          All ({Object.values(statusCounts).reduce((a, b) => a + b, 0)})
         </Text>
-      </View>
-
-      <View style={styles.orderStatusContainer}>
-        <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-        <Text style={[styles.orderStatus, { color: getStatusColor(item.status) }]}>
-          {item.status}
-        </Text>
-      </View>
-
-      <View style={styles.orderItemsContainer}>
-        {item.items.slice(0, 2).map((orderItem, index) => (
-          <View key={index} style={styles.orderItemPreview}>
-            <View style={styles.itemImagePlaceholder}>
-              <FastImage
-                source={{ uri: orderItem.product.thumbnail }}
-                style={styles.itemImagePlaceholder}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-            </View>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName} numberOfLines={1}>
-                {orderItem.product.name}
-              </Text>
-              <Text style={styles.itemQuantity}>x{orderItem.quantity}</Text>
-            </View>
-          </View>
-        ))}
-        {item.items.length > 2 && (
-          <View style={styles.moreItemsContainer}>
-            <Text style={styles.moreItemsText}>
-              +{item.items.length - 2} more items
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.orderFooter}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalAmount}>${item.totalAmount.toFixed(2)}</Text>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+      {Object.entries(statusCounts).map(([status, count]) => (
+        <TouchableOpacity
+          key={status}
+          style={[
+            styles.statusFilterItem,
+            selectedStatus === status && styles.selectedStatusFilterItem,
+          ]}
+          onPress={() => setSelectedStatus(status)}
+        >
+          <Text style={[
+            styles.statusFilterText,
+            selectedStatus === status && styles.selectedStatusFilterText,
+          ]}>
+            {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
   );
+
+  const filteredOrders = React.useMemo(() => {
+    if (!selectedStatus) return orders;
+    return orders.filter(order => order.status.toLowerCase() === selectedStatus.toLowerCase());
+  }, [orders, selectedStatus]);
 
   if (isLoading && !refreshing) {
     return (
@@ -135,11 +133,9 @@ const OrderListScreen = () => {
     <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
         <Text style={styles.title}>My Orders</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Icon name="filter-variant" size={24} color="#8E6CEF" />
-        </TouchableOpacity>
       </View>
-      {orders.length === 0 ? (
+      {renderStatusFilter()}
+      {filteredOrders.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Icon name="package-variant" size={64} color="#666" />
           <Text style={styles.emptyText}>No orders yet</Text>
@@ -147,8 +143,13 @@ const OrderListScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={orders}
-          renderItem={renderOrderItem}
+          data={filteredOrders}
+          renderItem={({ item }) => (
+            <OrderItem
+              item={item}
+              onPress={() => navigation.navigate('OrderDetail', { orderId: item._id })}
+            />
+          )}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -172,9 +173,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
@@ -185,116 +183,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  filterButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F8F5FF',
-  },
-  listContainer: {
-    padding: 16,
-  },
-  orderItem: {
+  statusFilterContainer: {
+    flexDirection: 'row',
+    padding: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    minHeight: 66,
+    maxHeight: 66,
+  },
+  statusFilterItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    backgroundColor: '#F8F5FF',
+    minWidth: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  selectedStatusFilterItem: {
+    backgroundColor: '#8E6CEF',
+    borderColor: '#8E6CEF',
+    shadowColor: '#8E6CEF',
+    shadowOpacity: 0.3,
+    transform: [{ scale: 1.02 }],
   },
-  orderIdContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  orderId: {
-    fontSize: 16,
+  statusFilterText: {
+    fontSize: 14,
+    color: '#666',
     fontWeight: '600',
-    color: '#333',
-    marginLeft: 8,
+    letterSpacing: 0.3,
   },
-  orderDate: {
-    fontSize: 14,
-    color: '#666',
+  selectedStatusFilterText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
-  orderStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  orderStatus: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  orderItemsContainer: {
-    marginBottom: 16,
-  },
-  orderItemPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  itemImagePlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    marginRight: 12,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-  itemQuantity: {
-    fontSize: 12,
-    color: '#666',
-  },
-  moreItemsContainer: {
-    marginTop: 8,
-  },
-  moreItemsText: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-  },
-  totalLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  totalAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+  listContainer: {
+    padding: 16,
   },
   emptyContainer: {
     flex: 1,

@@ -2,10 +2,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { Image, StyleSheet } from 'react-native';
 import HomeStack from './HomeStack';
-import NotificationScreen from '../screens/NotificationScreen';
+import NotificationStack from './NotificationStack';
 import ProfileScreen from '../screens/ProfileScreen';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import OrderStack from './OrderStack';
+
 export type TabParamList = {
   HomeStack: undefined;
   Notification: undefined;
@@ -47,15 +48,15 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Notification"
-        component={NotificationScreen}
-        options={{
+        component={NotificationStack}
+        options={({ route }) => ({
           tabBarIcon: ({ color }) => (
             <Image
               source={require('../assets/icons/notification.png')}
               style={[styles.icon, { tintColor: color }]}
             />
           ),
-        }}
+        })}
       />
       <Tab.Screen
         name="Order"

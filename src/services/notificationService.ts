@@ -2,6 +2,33 @@ import messaging from '@react-native-firebase/messaging';
 import { Alert, Platform } from 'react-native';
 import client from './client';
 import { useToast } from '../context/ToastContext';
+import axios from 'axios';
+import { API_URL } from '../config';
+import apiClient from './apiClient';
+
+export interface Notification {
+  _id: string;
+  user: string;
+  title: string;
+  message: string;
+  type: 'order' | 'system' | 'promotion';
+  isRead: boolean;
+  data: {
+    orderId?: string;
+    status?: string;
+    [key: string]: any;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetNotificationsResponse {
+  notifications: Notification[];
+  total: number;
+  page: number;
+  pages: number;
+  unreadCount: number;
+}
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
@@ -120,4 +147,34 @@ export const setupNotificationOpenedHandler = (onNotificationOpened: (data: any)
         }
       }
     });
+};
+
+export const getNotifications = async (page: number = 1, limit: number = 10): Promise<GetNotificationsResponse> => {
+  try {
+      const response = await client.get("notifications", {
+      params: { page, limit },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  try {
+    await client.put(`notifications/${notificationId}/read`, {});
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async (): Promise<void> => {
+  try {
+    await client.put('notifications/mark-all-read', {});
+  } catch (error) {
+    console.error('Failed to mark all notifications as read:', error);
+    throw error;
+  }
 }; 

@@ -23,64 +23,18 @@ const CheckoutScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
     address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'United States', // Default country
+    note: '',
   });
-  const [phoneError, setPhoneError] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('credit_card');
 
   useEffect(() => {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digit characters
-    const cleaned = value.replace(/\D/g, '');
-    
-    // Format as XXX XXX XXXX
-    const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-    if (match) {
-      const formatted = match[1] + (match[2] ? ` ${match[2]}` : '') + (match[3] ? ` ${match[3]}` : '');
-      return formatted;
-    }
-    return value;
-  };
-
-  const validatePhoneNumber = (phone: string) => {
-    // Remove all non-digit characters for validation
-    const cleaned = phone.replace(/\D/g, '');
-    
-    if (cleaned.length < 10) {
-      setPhoneError('Phone number must be 10 digits');
-      return false;
-    }
-    
-    setPhoneError('');
-    return true;
-  };
-
-  const handlePhoneChange = (value: string) => {
-    const formatted = formatPhoneNumber(value);
-    setFormData(prev => ({
-      ...prev,
-      phone: formatted,
-    }));
-    validatePhoneNumber(formatted);
-  };
-
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.zipCode) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    if (!validatePhoneNumber(formData.phone)) {
+    if (!formData.address) {
+      Alert.alert('Error', 'Please fill in the address field');
       return;
     }
 
@@ -89,15 +43,16 @@ const CheckoutScreen = () => {
 
       const shippingAddress: ShippingAddress = {
         street: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        country: formData.country,
+        city: '',
+        state: '',
+        zipCode: '',
+        country: '',
       };
 
       const orderData: CreateOrderRequest = {
         shippingAddress,
         paymentMethod: selectedPaymentMethod,
+        note: formData.note,
       };
 
       const response = await createOrder(orderData);
@@ -204,53 +159,17 @@ const CheckoutScreen = () => {
           <Text style={styles.sectionTitle}>Shipping Information</Text>
           <TextInput
             style={styles.input}
-            placeholder="Full Name *"
-            value={formData.name}
-            onChangeText={(value) => handleInputChange('name', value)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email *"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <View>
-            <TextInput
-              style={[styles.input, phoneError ? styles.inputError : null]}
-              placeholder="Phone Number * (XXX XXX XXXX)"
-              value={formData.phone}
-              onChangeText={handlePhoneChange}
-              keyboardType="phone-pad"
-              maxLength={12}
-            />
-            {phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null}
-          </View>
-          <TextInput
-            style={styles.input}
             placeholder="Street Address *"
             value={formData.address}
             onChangeText={(value) => handleInputChange('address', value)}
           />
           <TextInput
-            style={styles.input}
-            placeholder="City *"
-            value={formData.city}
-            onChangeText={(value) => handleInputChange('city', value)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="State *"
-            value={formData.state}
-            onChangeText={(value) => handleInputChange('state', value)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="ZIP Code *"
-            value={formData.zipCode}
-            onChangeText={(value) => handleInputChange('zipCode', value)}
-            keyboardType="numeric"
+            style={[styles.input, { height: 100, textAlignVertical: 'top', paddingTop: 12 }]}
+            placeholder="Notes (Optional)"
+            value={formData.notes}
+            onChangeText={(value) => handleInputChange('notes', value)}
+            multiline
+            numberOfLines={4}
           />
         </View>
 

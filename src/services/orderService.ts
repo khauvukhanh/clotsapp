@@ -15,6 +15,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   shippingAddress: ShippingAddress;
+  note: string;
   status: string;
   paymentStatus: string;
   paymentMethod: string;
@@ -22,18 +23,30 @@ export interface Order {
   updatedAt: string;
 }
 
-export const getOrders = async (): Promise<Order[]> => {
-  try {
-    const response = await client.get('/orders');
-    return response.data;
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Failed to fetch orders');
-  }
+export interface GetOrdersResponse {
+  orders: Order[];
+  total: number;
+  page: number;
+  pages: number;
+  statusCounts: {
+    pending: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  };
+}
+
+export const getOrders = async (status?: string): Promise<GetOrdersResponse> => {
+  const response = await client.get<GetOrdersResponse>('/orders', {
+    params: { status }
+  });
+  return response.data;
 };
 
 export const getOrderById = async (orderId: string): Promise<Order> => {
   try {
-    const response = await client.get(`/order/${orderId}`);
+    const response = await client.get(`/orders/${orderId}`);
     return response.data;
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch order details');
@@ -43,6 +56,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
 export interface CreateOrderRequest {
   shippingAddress: ShippingAddress;
   paymentMethod: string;
+  note?: string;
 }
 
 export interface OrderResponse {
