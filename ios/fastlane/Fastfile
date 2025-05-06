@@ -5,21 +5,19 @@ platform :ios do
   lane :beta do
     setup_ci if is_ci
     increment_build_number(xcodeproj: "MyApp.xcodeproj")
-    sync_code_signing(type: "appstore")
+    app_store_connect_api_key(
+      key_id: "TYW92CJLTD",
+      issuer_id: "e1627979-de09-4888-86fc-e1a497187fdb",
+      key_content: "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg5f3t58HDR3T5kfDc\noRqb9gPGM2Zhh7pqswzxelzBCemgCgYIKoZIzj0DAQehRANCAASd8iSVV1BqbPcp\nJKiFRXvtQCuhTVZEbaMxzamlwcnv2FH7XCDdyEylWcCgrX7qs69I6EODgyrlyv5r\nGY1bJLvI\n-----END PRIVATE KEY-----",
+      duration: 1200, # optional (maximum 1200)
+      in_house: false # optional but may be required if using match/sigh
+    )
     build_ios_app(
       scheme: "MyApp",
       export_method: "app-store",
-      configuration: "Release",
-      clean: true,
-      output_directory: "build",
-      output_name: "MyApp.ipa",
-      include_bitcode: false,
-      include_symbols: true
     )
     upload_to_testflight(
-      skip_waiting_for_build_processing: true,
-      apple_id: ENV["APPLE_APP_ID"],
-      ipa: "build/MyApp.ipa"
+      skip_waiting_for_build_processing: true
     )
   end
 end 

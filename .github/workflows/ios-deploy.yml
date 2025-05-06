@@ -11,11 +11,6 @@ jobs:
     runs-on: macos-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
-    env:
-      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-      FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -39,8 +34,6 @@ jobs:
           bundle install
 
       - name: Deploy to TestFlight
-        env:
-          APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
 
         run: |
           cd ios
