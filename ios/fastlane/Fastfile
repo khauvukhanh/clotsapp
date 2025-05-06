@@ -5,8 +5,6 @@ platform :ios do
   lane :beta do
     setup_ci if is_ci
     increment_build_number(xcodeproj: "MyApp.xcodeproj")
-    get_certificates           # invokes cert
-    get_provisioning_profile
     build_ios_app(
       scheme: "MyApp",
       export_method: "app-store",
@@ -16,6 +14,13 @@ platform :ios do
       output_name: "MyApp.ipa",
       include_bitcode: false,
       include_symbols: true
+    )
+    app_store_connect_api_key(
+      key_id: "TYW92CJLTD",
+      issuer_id: "e1627979-de09-4888-86fc-e1a497187fdb",
+      key_filepath: "./AuthKey_TYW92CJLTD.p8",
+      duration: 1200, # optional (maximum 1200)
+      in_house: false # optional but may be required if using match/sigh
     )
     upload_to_testflight(
       skip_waiting_for_build_processing: true,
