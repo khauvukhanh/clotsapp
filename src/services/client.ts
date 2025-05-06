@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NavigationService from './navigationService';
+import * as NavigationService from '../navigation/NavigationService';
 
 // const API_BASE_URL = 'http://192.168.1.4:5000/api/';
 const API_BASE_URL = 'https://backend-api-mb18.onrender.com/api/';
@@ -53,7 +53,7 @@ class ApiClient {
     AsyncStorage.removeItem('isAuthenticated');
     AsyncStorage.removeItem('token');
     AsyncStorage.removeItem('profile');
-    NavigationService.navigateToLogin();
+    NavigationService.navigate("Auth");
   }
 
   get(url, params = {}) {

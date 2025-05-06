@@ -9,6 +9,7 @@ type UserProfile = {
 };
 
 type AuthContextType = {
+  isLoading: boolean;
   isAuthenticated: boolean;
   userProfile: UserProfile | null;
   login: (token: string, callback: () => void) => Promise<void>;
@@ -19,6 +20,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       const auth = await AsyncStorage.getItem('isAuthenticated');
       setIsAuthenticated(auth === 'true');
+      setIsLoading(false);
       const profileData = await AsyncStorage.getItem('profile');
       if (profileData) {
         setUserProfile(JSON.parse(profileData));
@@ -60,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userProfile, login, logout, fetchProfile }}>
+    <AuthContext.Provider value={{ isLoading, isAuthenticated, userProfile, login, logout, fetchProfile }}>
       {children}
     </AuthContext.Provider>
   );

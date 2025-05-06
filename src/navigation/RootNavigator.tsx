@@ -1,27 +1,28 @@
-import React, { useRef } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
-import { useAuth } from '../context/AuthContext';
+import { navigationRef } from './NavigationService';
 import { RootStackParamList } from './types';
+import { ActivityIndicator, View } from 'react-native';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-interface RootNavigatorProps {
-  onReady?: (ref: NavigationContainerRef<RootStackParamList>) => void;
-}
+const RootNavigator: React.FC= () => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-const RootNavigator: React.FC<RootNavigatorProps> = ({ onReady }) => {
-  const { isAuthenticated } = useAuth();
-  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
-    <NavigationContainer ref={navigationRef} onReady={() => {
-      if (navigationRef.current) {
-        onReady?.(navigationRef.current);
-      }
-    }}>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <Stack.Screen name="Auth" component={AuthNavigator} />
