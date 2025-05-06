@@ -13,6 +13,7 @@ platform :ios do
       in_house: false # optional but may be required if using match/sigh
     )
     build_ios_app(
+      workspace: "MyApp.xcworkspace",
       scheme: "MyApp",
       export_method: "app-store",
     )
