@@ -24,19 +24,20 @@ jobs:
           ruby-version: '2.6.0'
           bundler-cache: true
 
-      - name: Install Fastlane
-        run: |
-          cd ios
-          bundle install
+      - name: Install dependencies
+        run: yarn install
 
       - name: Install CocoaPods
         run: |
           cd ios
           pod install
 
-      - name: Deploy to TestFlight
-        env:
-          APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+      - name: Install Fastlane
         run: |
           cd ios
-          bundle exec fastlane beta 
+          bundle install
+
+      - name: Deploy to TestFlight
+        run: |
+          cd ios
+          bundle exec fastlane deploy 
