@@ -42,3 +42,9 @@ jobs:
         run: |
           cd ios
           bundle exec fastlane beta
+
+      - name: Show xcodebuild log if build fails
+        if: failure()
+        run: |
+          echo "===== xcodebuild log ====="
+          cat ~/Library/Logs/gym/MyApp-MyApp.log || echo "No log found"
