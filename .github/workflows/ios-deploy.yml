@@ -39,12 +39,9 @@ jobs:
           bundle install
 
       - name: Deploy to TestFlight
+        env:
+          APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+
         run: |
           cd ios
           bundle exec fastlane beta
-
-      - name: Show xcodebuild log if build fails
-        if: failure()
-        run: |
-          echo "===== xcodebuild log ====="
-          cat ~/Library/Logs/gym/MyApp-MyApp.log || echo "No log found"
