@@ -41,5 +41,5 @@ jobs:
 
       - name: Deploy to TestFlight
         run: |
-          cd ios
+          export FASTLANE_DISABLE_INTERACTIVE=true
           bundle exec fastlane beta
