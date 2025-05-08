@@ -35,8 +35,7 @@ jobs:
 
       - name: Decode App Store Connect API Key
         run: |
-          mkdir -p ios
-          echo "$APPSTORE_CONNECT_API_KEY_BASE64" | base64 --decode > AuthKey_TYW92CJLTD.p8
+          base64 --decode > ./AuthKey_TYW92CJLTD.p8
         env:
           APPSTORE_CONNECT_API_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_BASE64 }}
 
