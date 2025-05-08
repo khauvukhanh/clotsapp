@@ -4,21 +4,28 @@ platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     setup_ci if is_ci
-    increment_build_number(xcodeproj: "MyApp.xcodeproj")
+    increment_build_number(xcodeproj: "./ios/MyApp.xcodeproj")
     app_store_connect_api_key(
       key_id: "TYW92CJLTD",
       issuer_id: "e1627979-de09-4888-86fc-e1a497187fdb",
-      key_content: "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg5f3t58HDR3T5kfDc\noRqb9gPGM2Zhh7pqswzxelzBCemgCgYIKoZIzj0DAQehRANCAASd8iSVV1BqbPcp\nJKiFRXvtQCuhTVZEbaMxzamlwcnv2FH7XCDdyEylWcCgrX7qs69I6EODgyrlyv5r\nGY1bJLvI\n-----END PRIVATE KEY-----",
+      key_filepath: "./AuthKey_TYW92CJLTD.p8",  
       duration: 1200, # optional (maximum 1200)
       in_house: false # optional but may be required if using match/sigh
     )
     build_ios_app(
-      workspace: "MyApp.xcworkspace",
+      workspace: "./ios/MyApp.xcworkspace",
       scheme: "MyApp",
-      export_method: "app-store",
+      export_method: "app-store"
     )
     upload_to_testflight(
       skip_waiting_for_build_processing: true
     )
+    commit_version_bump(
+      message: "Bump version after TestFlight build"
+    )
+    push_to_git_remote(
+      remote: "origin",
+      tags: false
+    )
   end
-end 
+end

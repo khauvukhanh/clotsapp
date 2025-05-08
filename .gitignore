@@ -108,7 +108,7 @@ xcuserdata
 .env.dev.testnet
 .env.staging.mainnet
 .env.staging.testnet
-
+*.p8
 # yarn.lock
 yarn.lock
 android/key.properties
