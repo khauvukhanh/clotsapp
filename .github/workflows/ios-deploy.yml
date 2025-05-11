@@ -1,5 +1,5 @@
-name: iOS Deploy
-
+name: iOS Build and Deploy
+ß
 on:
   push:
     branches:
