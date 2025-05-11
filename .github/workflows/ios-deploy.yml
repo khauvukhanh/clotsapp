@@ -1,5 +1,5 @@
 name: iOS Build and Deploy
-ß
+
 on:
   push:
     branches:
