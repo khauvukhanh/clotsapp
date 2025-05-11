@@ -9,11 +9,15 @@ jobs:
   deploy:
     name: Deploy to TestFlight
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -30,7 +34,6 @@ jobs:
 
       - name: Install Fastlane
         run: |
-          cd ios
           bundle install
 
       - name: Decode App Store Connect API Key
