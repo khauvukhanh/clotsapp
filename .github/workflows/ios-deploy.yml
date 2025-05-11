@@ -36,13 +36,9 @@ jobs:
         run: |
           bundle install
 
-      - name: Decode App Store Connect API Key
-        run: |
-          base64 --decode > ./AuthKey_TYW92CJLTD.p8
-        env:
-          APPSTORE_CONNECT_API_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_BASE64 }}
-
       - name: Deploy to TestFlight
+        env:
+          API_KEY_CONTENT: ${{ secrets.API_KEY_CONTENT }}
+
         run: |
-          export FASTLANE_DISABLE_INTERACTIVE=true
-          bundle exec fastlane beta
+          bundle exec fastlane beta --key_content "$API_KEY_CONTENT"
