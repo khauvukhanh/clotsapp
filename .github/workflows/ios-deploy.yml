@@ -36,9 +36,10 @@ jobs:
         run: |
           bundle install
 
-      - name: Deploy to TestFlight
-        env:
-          API_KEY_CONTENT: ${{ secrets.API_KEY_CONTENT }}
+      - name: Decode API Key
+        run: |
+          echo "$API_KEY_CONTENT" | base64 --decode > ios/AuthKey.p8
 
+      - name: Deploy to TestFlight
         run: |
           bundle exec fastlane beta
