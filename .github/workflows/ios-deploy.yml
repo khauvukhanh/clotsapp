@@ -24,6 +24,10 @@ jobs:
         with:
           ruby-version: 3.2
 
+      - name: Decode .p8 file
+        run: |
+          echo "${{ secrets.APP_STORE_P8_KEY }}" | base64 --decode > AuthKey_TYW92CJLTD.p8
+
       - name: Install dependencies
         run: yarn install
 
@@ -37,8 +41,5 @@ jobs:
           bundle install
 
       - name: Deploy to TestFlight
-        env:
-          API_KEY_CONTENT: ${{ secrets.API_KEY_CONTENT }}
-
         run: |
           bundle exec fastlane beta
