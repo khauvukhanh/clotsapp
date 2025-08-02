@@ -9,6 +9,8 @@ jobs:
   deploy:
     name: Deploy to TestFlight
     runs-on: macos-latest
+    env:
+      APP_STORE_P8_KEY: ${{ secrets.APP_STORE_P8_KEY }}
 
     steps:
       - name: Checkout code
