@@ -8,12 +8,9 @@ platform :ios do
     app_store_connect_api_key(
       key_id: "TYW92CJLTD",
       issuer_id: "e1627979-de09-4888-86fc-e1a497187fdb",
-      key_content: "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg5f3t58HDR3T5kfDcoRqb9gPGM2Zhh7pqswzxelzBCemgCgYIKoZIzj0DAQehRANCAASd8iSVV1BqbPcpJKiFRXvtQCuhTVZEbaMxzamlwcnv2FH7XCDdyEylWcCgrX7qs69I6EODgyrlyv5rGY1bJLvI\n-----END PRIVATE KEY-----",
+      key_filepath: "AuthKey.p8",
       duration: 1200, # optional (maximum 1200)
       in_house: false # optional but may be required if using match/sigh
-      # key_filepath: "./AuthKey_TYW92CJLTD.p8",  
-      # duration: 1200, # optional (maximum 1200)
-      # in_house: false # optional but may be required if using match/sigh
     )
     build_ios_app(
       workspace: "./ios/MyApp.xcworkspace",

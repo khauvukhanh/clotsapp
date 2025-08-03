@@ -24,6 +24,9 @@ jobs:
         with:
           ruby-version: 3.2
 
+      - name: Decode App Store Connect API key
+        run: echo "${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}" > AuthKey.p8
+
       - name: Install dependencies
         run: yarn install
 
