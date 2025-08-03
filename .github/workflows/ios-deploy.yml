@@ -9,8 +9,6 @@ jobs:
   deploy:
     name: Deploy to TestFlight
     runs-on: macos-latest
-    env:
-      APP_STORE_P8_KEY: ${{ secrets.APP_STORE_P8_KEY }}
 
     steps:
       - name: Checkout code
@@ -20,15 +18,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.2
-
-      - name: Decode .p8 file
-        run: |
-          echo "${{ secrets.APP_STORE_P8_KEY }}" | base64 --decode > AuthKey_TYW92CJLTD.p8
 
       - name: Install dependencies
         run: yarn install
